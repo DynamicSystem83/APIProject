@@ -107,33 +107,36 @@ public class Controller
 		List<Movie> movieList = getMovieListFromIds(movies);
 		if (genre != null)
 		{
-			for (Movie m : movieList)
+			movieList = movieList.stream().filter(m -> m.getGenre().equals(genre)).collect(Collectors.toList());
+			/*for (Movie m : movieList)
 			{
 				if (!m.getGenre().equals(genre))
 				{
 					movieList.remove(m);
 				}
-			}
+			}*/
 		}
 		if (mpaRating != null)
 		{
-			for (Movie m : movieList)
+			movieList = movieList.stream().filter(m -> m.getMpaRating().contains(mpaRating)).collect(Collectors.toList());
+			/*for (Movie m : movieList)
 			{
 				if (!m.getMpaRating().equals(mpaRating))
 				{
 					movieList.remove(m);
 				}
-			}
+			}*/
 		}
 		if (customerRating != null)
 		{
-			for (Movie m : movieList)
+			movieList = movieList.stream().filter(m -> m.getCustomerRating() >= customerRating).collect(Collectors.toList());
+			/*for (Movie m : movieList)
 			{
 				if (m.getCustomerRating() < customerRating)
 				{
 					movieList.remove(m);
 				}
-			}
+			}*/
 		}
         return ResponseEntity.ok(movieList);
     }
