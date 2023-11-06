@@ -105,6 +105,16 @@ public class Controller
 		// TODO: Add caching
 		// TODO: Add errors
 		List<Movie> movieList = getMovieListFromIds(movies);
+		if (genre != null)
+		{
+			for (Movie m : movieList)
+			{
+				if (!m.getGenre().equals(genre))
+				{
+					movieList.remove(m);
+				}
+			}
+		}
         return ResponseEntity.ok(movieList);
     }
 
