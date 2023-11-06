@@ -115,6 +115,26 @@ public class Controller
 				}
 			}
 		}
+		if (mpaRating != null)
+		{
+			for (Movie m : movieList)
+			{
+				if (!m.getMpaRating().equals(mpaRating))
+				{
+					movieList.remove(m);
+				}
+			}
+		}
+		if (customerRating != null)
+		{
+			for (Movie m : movieList)
+			{
+				if (m.getCustomerRating() < customerRating)
+				{
+					movieList.remove(m);
+				}
+			}
+		}
         return ResponseEntity.ok(movieList);
     }
 
