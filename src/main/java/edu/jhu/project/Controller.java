@@ -1,12 +1,18 @@
 package edu.jhu.project;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
+
 import java.lang.IllegalArgumentException;
+import java.util.stream.Collectors;  
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.boot.autoconfigure.cache.CacheProperties.Caffeine;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.client.RestTemplate;
 
@@ -101,44 +109,44 @@ public class Controller
 									@RequestParam(value="customerRating", required=false) double customerRating,
 									@RequestParam(value="title", required=false) String title)
     {
-		// TODO: Add filtering
 		// TODO: Add caching
-		// TODO: Add errors
+
+
 		List<Movie> movieList = getMovieListFromIds(movies);
-		if (genre != null)
-		{
-			movieList = movieList.stream().filter(m -> m.getGenre().equals(genre)).collect(Collectors.toList());
-			/*for (Movie m : movieList)
-			{
-				if (!m.getGenre().equals(genre))
-				{
-					movieList.remove(m);
-				}
-			}*/
+
+		// Create a predicate to filter based on request parameter
+		Predicate<Movie> filterMoviePredicate = movie -> {
+            // Filter by genre if provided
+            if (genre != null && movie.getGenre() != genre) {
+                return false;
+            }
+
+            // Filter by mpaRating if provided
+			if (mpaRating != null && movie.getMpaRating() != mpaRating) {
+                return false;
+            }
+			
+			// Filter by title 
+			if (title != null && movie.getTitle() != title) {
+                return false;
+            }
+			// Filter by customerRating if provided
+			if (customerRating != 0.0d && movie.getCustomerRating() < customerRating) {
+                return false;
+            }
+            return true;
+        };
+
+		List<Movie> filteredMovies= movieList.stream()
+                .filter(filterMoviePredicate)
+                .collect(Collectors.toList());
+		
+		if (filteredMovies.isEmpty()) {
+			// TODO: Should this return an error if empty or just return empty list??
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid query request.");
 		}
-		if (mpaRating != null)
-		{
-			movieList = movieList.stream().filter(m -> m.getMpaRating().contains(mpaRating)).collect(Collectors.toList());
-			/*for (Movie m : movieList)
-			{
-				if (!m.getMpaRating().equals(mpaRating))
-				{
-					movieList.remove(m);
-				}
-			}*/
-		}
-		if (customerRating != null)
-		{
-			movieList = movieList.stream().filter(m -> m.getCustomerRating() >= customerRating).collect(Collectors.toList());
-			/*for (Movie m : movieList)
-			{
-				if (m.getCustomerRating() < customerRating)
-				{
-					movieList.remove(m);
-				}
-			}*/
-		}
-        return ResponseEntity.ok(movieList);
+
+        return ResponseEntity.ok(filteredMovies);
     }
 
 	@GetMapping(value = "/movies/{movieId}")
@@ -149,7 +157,7 @@ public class Controller
 		{
 			return ResponseEntity.ok(m);
 		}
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Showing not found");
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie not found");
 	}
 
 	@GetMapping(value = "/theaters")
@@ -162,41 +170,97 @@ public class Controller
 	@GetMapping(value = "/theaters/{theaterId}")
     public ResponseEntity getSpecificTheater(@PathVariable int theaterId)
     {
-		// TODO: only show future showings
-		// TODO: Add errors
-		// Should this be changed to also show theater details if a query parameter is set
-		List<String> movieIds = new ArrayList<String>();
-		for (Showing s : showings)
-		{
-			if (s.getTheaterId() == theaterId)
-			{
-				if (s.getDate() > LocalDate.now())
-				{
-					if (!movieIds.contains(s.getMovieId()))
-					{
-						movieIds.add(s.getMovieId());
-					}
-				}
-			}
+		Theater currentTheater = findTheaterById(theaterId);
+		if (currentTheater == null){
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
 		}
-		
-		return ResponseEntity.ok(getMovieListFromIds(movieIds));
+		return ResponseEntity.ok(currentTheater);
+	}
+
+	@GetMapping(value = "/theaters/{theaterId}/showings")
+	public ResponseEntity getSpecificTheaterShowings(@PathVariable int theaterId)
+	{
+		Theater currentTheater = findTheaterById(theaterId);
+		if (currentTheater == null){
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
+		}
+
+		List<Showing> showingsForTheater = findShowingsByTheaterId(theaterId);
+
+		for (Showing s : showingsForTheater){
+			s.addMetaData("Movie", getMovieFromId(s.getMovieId()));
+		}
+
+		// Create a Map to hold the results
+        Map<String, Object> result = new HashMap<>();
+		result.put("theater", currentTheater);
+        result.put("showings", showingsForTheater);
+
+		// TODO: is the map needed or should just the showings be returned??
+		return ResponseEntity.ok(result);	
+	}
+
+	@GetMapping(value = "/theaters/{theaterId}/movies")
+	public ResponseEntity getSpecificTheaterAvailableMovies(@PathVariable int theaterId)
+	{
+		Theater currentTheater = findTheaterById(theaterId);
+		if (currentTheater == null){
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
+		}
+
+		List<Showing> showingsForTheater = findShowingsByTheaterId(theaterId);
+		List<String> movies = showingsForTheater.stream()
+            .map(Showing::getMovieId) // Extract movie IDs from showings
+            .distinct() 
+            .collect(Collectors.toList()); 
+
+		List<Movie> movieList = getMovieListFromIds(movies);
+
+		// Create a Map to hold the results
+        Map<String, Object> result = new HashMap<>();
+
+
+		result.put("theater", currentTheater);
+        result.put("movies", movieList);
+
+		return ResponseEntity.ok(result);	
 	}
 
 	@GetMapping(value = "/showings")
     public ResponseEntity getShowings(@RequestParam(value="movieId", required=false) String movieId,
-									@RequestParam(value="theaterId", required=false) int theaterId,
+									@RequestParam(value="theaterId", required=false) Integer theaterId,
 									@RequestParam(value="date", required=false) String date)
     {
-		// TODO: Add filtering (including only show future showings)
-		// TODO: Add errors
 		List<Showing> showingList = new ArrayList<Showing>();
-		for (Showing s : showings)
-		{
-			if (s.getDate() > LocalDate.now())
-			{
-				showingList.add(s);
-			}
+
+		// Create a predicate to filter based on request parameters
+		Predicate<Showing> filterPredicate = showing -> {
+            LocalDate currentDate = LocalDate.now();
+
+            // Filter by theaterId if provided
+            if (theaterId != null && showing.getTheaterId() != theaterId.intValue()) {
+                return false;
+            }
+
+            // Filter by date if provided
+            if (date != null) {
+                LocalDate showingDate = LocalDate.parse(date);
+                if (!showing.getDate().isEqual(showingDate)) {
+                    return false;
+                }
+            }
+
+            // Filter current and future showings
+            return showing.getDate().isAfter(currentDate) || showing.getDate().isEqual(currentDate);
+        };
+
+		List<Showing> filteredShowings = showings.stream()
+                .filter(filterPredicate)
+                .collect(Collectors.toList());
+
+		if (filteredShowings.isEmpty()) {
+			// TODO: Should this return an error if empty or just return empty list??
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid query request.");
 		}
         return ResponseEntity.ok(showingList);
 	}
@@ -221,6 +285,7 @@ public class Controller
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Showing not found");
     }
 	
+	@Cacheable("movies")
 	public Movie getMovieFromId(String movieId)
 	{
 		// TODO: Add caching
@@ -272,4 +337,21 @@ public class Controller
 		}
         return movieList;
 	}
+
+	private Theater findTheaterById(int theaterId) {
+        // Logic to find and return the theater by ID
+        return theaters.stream()
+            .filter(theater -> theater.getTheaterId() == theaterId)
+            .findFirst()
+            .orElse(null); // Handle if theater is not found
+    }
+
+	private List<Showing> findShowingsByTheaterId(int theaterId) {
+        // Logic to find and return the theater by ID
+		LocalDate currentDate = LocalDate.now();
+        return showings.stream()
+            .filter(showing -> showing.getTheaterId() == theaterId 
+			&& (showing.getDate().isAfter(currentDate) || showing.getDate().isEqual(currentDate)))
+            .collect(Collectors.toList());
+    }
 }

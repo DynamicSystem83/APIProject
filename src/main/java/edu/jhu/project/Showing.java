@@ -2,6 +2,7 @@ package edu.jhu.project;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -19,6 +20,7 @@ public class Showing
 	private LocalTime time;
 	private int totalTickets;
 	private int remainingTickets;
+    private Map<String, Object> additionalMetaData;
 
     public Showing(int id, String movieId, int theaterId, double price, String format, LocalDate date, LocalTime time, int totalTickets, int remainingTickets)
     {
@@ -122,5 +124,17 @@ public class Showing
     public void setRemainingTickets(int remainingTickets)
     {
         this.remainingTickets = remainingTickets;
+    }
+
+    public void addMetaData(String key, Object value){
+        additionalMetaData.put(key, value);
+    }
+
+    public void removeMetaData(String key) {
+        additionalMetaData.remove(key);
+    }
+
+    public Object getMetaData(String key) {
+        return additionalMetaData.get(key);
     }
 }

@@ -5,4 +5,5 @@ edu\jhu\project\ProjectApplication.class
 edu\jhu\project\BusinessDay.class
 edu\jhu\project\Address.class
 edu\jhu\project\Controller.class
+edu\jhu\project\CacheConfig.class
 edu\jhu\project\Showing.class
