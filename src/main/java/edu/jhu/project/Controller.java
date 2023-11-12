@@ -120,7 +120,7 @@ public class Controller
             }
 
             // Filter by mpaRating if provided
-			if (mpaRating != null && movie.getMpaRating() != mpaRating) {
+			if (mpaRating != null && !movie.getMpaRating().equals(mpaRating)) {
                 return false;
             }
 			
@@ -297,7 +297,7 @@ public class Controller
 				respTitle = root.findValue("Title").textValue();
 				respGenre = root.findValue("Genre").textValue();
 				respMpaRating = root.findValue("Rated").textValue();
-				respCustomerRating = root.findValue("imdbRating").doubleValue();
+				respCustomerRating = Double.parseDouble(root.findValue("imdbRating").textValue());
 				return new Movie(movieId, respTitle, respGenre, respMpaRating, respCustomerRating);
 			}
 			catch (JsonProcessingException e)
