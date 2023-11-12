@@ -106,18 +106,16 @@ public class Controller
 	@GetMapping(value = "/movies")
     public ResponseEntity getMovies(@RequestParam(value="genre", required=false) String genre,
 									@RequestParam(value="mpaRating", required=false) String mpaRating,
-									@RequestParam(value="customerRating", required=false) double customerRating,
+									@RequestParam(value="customerRating", required=false) Double customerRating,
 									@RequestParam(value="title", required=false) String title)
     {
-		// TODO: Add caching
-
 
 		List<Movie> movieList = getMovieListFromIds(movies);
 
 		// Create a predicate to filter based on request parameter
 		Predicate<Movie> filterMoviePredicate = movie -> {
             // Filter by genre if provided
-            if (genre != null && movie.getGenre() != genre) {
+            if (genre != null && !movie.getGenre().toLowerCase().contains(genre.toLowerCase())) {
                 return false;
             }
 
@@ -127,11 +125,11 @@ public class Controller
             }
 			
 			// Filter by title 
-			if (title != null && movie.getTitle() != title) {
+			if (title != null && !movie.getTitle().toLowerCase().contains(title.toLowerCase())) {
                 return false;
             }
 			// Filter by customerRating if provided
-			if (customerRating != 0.0d && movie.getCustomerRating() < customerRating) {
+			if (customerRating != null && movie.getCustomerRating() < customerRating) {
                 return false;
             }
             return true;
@@ -140,11 +138,6 @@ public class Controller
 		List<Movie> filteredMovies= movieList.stream()
                 .filter(filterMoviePredicate)
                 .collect(Collectors.toList());
-		
-		if (filteredMovies.isEmpty()) {
-			// TODO: Should this return an error if empty or just return empty list??
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid query request.");
-		}
 
         return ResponseEntity.ok(filteredMovies);
     }
@@ -196,7 +189,6 @@ public class Controller
 		result.put("theater", currentTheater);
         result.put("showings", showingsForTheater);
 
-		// TODO: is the map needed or should just the showings be returned??
 		return ResponseEntity.ok(result);	
 	}
 
@@ -258,11 +250,7 @@ public class Controller
                 .filter(filterPredicate)
                 .collect(Collectors.toList());
 
-		if (filteredShowings.isEmpty()) {
-			// TODO: Should this return an error if empty or just return empty list??
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid query request.");
-		}
-        return ResponseEntity.ok(showingList);
+        return ResponseEntity.ok(filteredShowings);
 	}
 
 	@PutMapping(value = "/showings/{showingId}")
@@ -288,7 +276,6 @@ public class Controller
 	@Cacheable("movies")
 	public Movie getMovieFromId(String movieId)
 	{
-		// TODO: Add caching
 		RestTemplate restTemplate = new RestTemplate();
 		ObjectMapper mapper = new ObjectMapper();
 		String prefixURL = "http://www.omdbapi.com/?i=";
