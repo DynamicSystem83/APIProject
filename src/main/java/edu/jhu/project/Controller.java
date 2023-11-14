@@ -29,6 +29,10 @@ import javax.validation.ConstraintViolationException;
 
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.Email;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.Pattern;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,6 +49,8 @@ public class Controller
 
 	private final AtomicInteger showingIdCounter = new AtomicInteger();
 	private List<Showing> showings = new ArrayList<Showing>();
+	
+	private final String stateRegEx = "^(AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|([M][EDAINSOT])|([N][EVHJMYCD])|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)$";
     
 	public Controller()
 	{
@@ -68,11 +74,11 @@ public class Controller
 		businessHours.add(new BusinessDay(DayOfWeek.SATURDAY, LocalTime.of(10, 0), LocalTime.of(23, 59)));
 		businessHours.add(new BusinessDay(DayOfWeek.SUNDAY, LocalTime.of(10, 0), LocalTime.of(21, 0)));
 
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse Village", new Address("2700 W Anderson Ln.", "Austin", "Texas"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse South Lamar", new Address("1120 S Lamar Blvd.", "Austin", "Texas"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse LaCenterra", new Address("2707 Commercial Center Blvd.", "Houston", "Texas"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Marcus Point Cinema", new Address("7825 Big Sky Dr.", "Madison", "Wisconsin"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "AMC Fitchburg 18", new Address("6091 McKee Rd.", "Fitchburg", "Wisconsin"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse Village", new Address("2700 W Anderson Ln.", "Austin", "TX"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse South Lamar", new Address("1120 S Lamar Blvd.", "Austin", "TX"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse LaCenterra", new Address("2707 Commercial Center Blvd.", "Houston", "TX"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Marcus Point Cinema", new Address("7825 Big Sky Dr.", "Madison", "WI"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "AMC Fitchburg 18", new Address("6091 McKee Rd.", "Fitchburg", "WI"), businessHours));
 
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "Standard", LocalDate.of(2023, 10, 21), LocalTime.of(15, 15), 20, 7));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "IMAX", LocalDate.of(2023, 11, 21), LocalTime.of(15, 0), 15, 3));
@@ -105,8 +111,8 @@ public class Controller
 
 	@GetMapping(value = "/movies")
     public ResponseEntity getMovies(@RequestParam(value="genre", required=false) String genre,
-									@RequestParam(value="mpaRating", required=false) String mpaRating,
-									@RequestParam(value="customerRating", required=false) Double customerRating,
+									@RequestParam(value="mpaRating", required=false) @Pattern(regexp="^(G|PG|PG-13|R|NC-17)$", message="Invalid MPA rating") String mpaRating,
+									@RequestParam(value="customerRating", required=false) @DecimalMin(value = "0.0", inclusive = true) @DecimalMax(value = "10.0", inclusive = true) Double customerRating,
 									@RequestParam(value="title", required=false) String title)
     {
 
@@ -115,27 +121,31 @@ public class Controller
 		// Create a predicate to filter based on request parameter
 		Predicate<Movie> filterMoviePredicate = movie -> {
             // Filter by genre if provided
-            if (genre != null && !movie.getGenre().toLowerCase().contains(genre.toLowerCase())) {
+            if (genre != null && !movie.getGenre().toLowerCase().contains(genre.toLowerCase()))
+			{
                 return false;
             }
 
             // Filter by mpaRating if provided
-			if (mpaRating != null && !movie.getMpaRating().equals(mpaRating)) {
+			if (mpaRating != null && !movie.getMpaRating().equals(mpaRating))
+			{
                 return false;
             }
 			
-			// Filter by title 
-			if (title != null && !movie.getTitle().toLowerCase().contains(title.toLowerCase())) {
+			// Filter by title if provided
+			if (title != null && !movie.getTitle().toLowerCase().contains(title.toLowerCase()))
+			{
                 return false;
             }
 			// Filter by customerRating if provided
-			if (customerRating != null && movie.getCustomerRating() < customerRating) {
+			if (customerRating != null && movie.getCustomerRating() < customerRating)
+			{
                 return false;
             }
             return true;
         };
 
-		List<Movie> filteredMovies= movieList.stream()
+		List<Movie> filteredMovies = movieList.stream()
                 .filter(filterMoviePredicate)
                 .collect(Collectors.toList());
 
@@ -155,16 +165,38 @@ public class Controller
 
 	@GetMapping(value = "/theaters")
     public ResponseEntity getTheaters(@RequestParam(value="city", required=false) String city,
-									@RequestParam(value="state", required=false) String state)
+									@RequestParam(value="state", required=false) @Pattern(regexp=stateRegEx, message="Invalid state abbreviation") String state)
     {
-        return ResponseEntity.ok(theaters);
+		// Create a predicate to filter based on request parameter
+		Predicate<Theater> filterTheaterPredicate = theater -> {
+            // Filter by state if provided
+            if (state != null && !theater.getAddr().getState().equals(state))
+			{
+                return false;
+            }
+
+			// Filter by city if provided
+			if (city != null && !theater.getAddr().getCity().toLowerCase().equals(city.toLowerCase()))
+			{
+                return false;
+            }
+
+            return true;
+        };
+
+		List<Theater> filteredTheaters = theaters.stream()
+                .filter(filterTheaterPredicate)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredTheaters);
 	}
 
 	@GetMapping(value = "/theaters/{theaterId}")
     public ResponseEntity getSpecificTheater(@PathVariable int theaterId)
     {
 		Theater currentTheater = findTheaterById(theaterId);
-		if (currentTheater == null){
+		if (currentTheater == null)
+		{
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
 		}
 		return ResponseEntity.ok(currentTheater);
@@ -174,7 +206,8 @@ public class Controller
 	public ResponseEntity getSpecificTheaterShowings(@PathVariable int theaterId)
 	{
 		Theater currentTheater = findTheaterById(theaterId);
-		if (currentTheater == null){
+		if (currentTheater == null)
+		{
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
 		}
 
@@ -196,7 +229,8 @@ public class Controller
 	public ResponseEntity getSpecificTheaterAvailableMovies(@PathVariable int theaterId)
 	{
 		Theater currentTheater = findTheaterById(theaterId);
-		if (currentTheater == null){
+		if (currentTheater == null)
+		{
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
 		}
 
@@ -221,7 +255,7 @@ public class Controller
 	@GetMapping(value = "/showings")
     public ResponseEntity getShowings(@RequestParam(value="movieId", required=false) String movieId,
 									@RequestParam(value="theaterId", required=false) Integer theaterId,
-									@RequestParam(value="date", required=false) String date)
+									@RequestParam(value="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date)
     {
 		List<Showing> showingList = new ArrayList<Showing>();
 
@@ -230,14 +264,16 @@ public class Controller
             LocalDate currentDate = LocalDate.now();
 
             // Filter by theaterId if provided
-            if (theaterId != null && showing.getTheaterId() != theaterId.intValue()) {
+            if (theaterId != null && showing.getTheaterId() != theaterId.intValue())
+			{
                 return false;
             }
 
             // Filter by date if provided
-            if (date != null) {
-                LocalDate showingDate = LocalDate.parse(date);
-                if (!showing.getDate().isEqual(showingDate)) {
+            if (date != null)
+			{
+                if (!showing.getDate().isEqual(date))
+				{
                     return false;
                 }
             }
@@ -255,7 +291,7 @@ public class Controller
 
 	@PutMapping(value = "/showings/{showingId}")
     public ResponseEntity purchaseTickets(@PathVariable int showingId,
-								  @RequestParam(value="numberTickets", required=true) int numberTickets)
+								  @RequestParam(value="numberTickets", required=true) @Min(value = 1, message = "Must purchase at least one ticket") int numberTickets)
     {
 		for (Showing s : showings)
 		{
