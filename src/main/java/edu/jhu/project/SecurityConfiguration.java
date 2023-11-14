@@ -42,7 +42,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter
     @Override
     public void configure(final WebSecurity webSecurity)
 	{
-        webSecurity.ignoring().antMatchers("/token/**");
+        webSecurity.ignoring().antMatchers("/login/**");
     }
 
     @Override

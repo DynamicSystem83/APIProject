@@ -10,7 +10,7 @@ public class TokenController
     @Autowired
     private UserService userService;
 
-    @PostMapping("/token")
+    @PostMapping("/login")
     public String getToken(@RequestParam("email") final String email, @RequestParam("password") final String password)
 	{
 		String token = userService.login(email, password);
