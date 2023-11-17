@@ -1,4 +1,4 @@
-package edu.jhu.project;
+package edu.jhu.project.models;
 
 import java.util.List;
 

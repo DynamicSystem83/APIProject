@@ -1,8 +1,9 @@
-package edu.jhu.project;
+package edu.jhu.project.models;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -34,6 +35,7 @@ public class Showing
 		this.time = time;
 		this.totalTickets = totalTickets;
 		this.remainingTickets = remainingTickets;
+		this.additionalMetaData = new HashMap<String, Object>();
     }
 
     public int getId()

@@ -1,4 +1,4 @@
-package edu.jhu.project;
+package edu.jhu.project.security;
 
 import java.util.Arrays;
 

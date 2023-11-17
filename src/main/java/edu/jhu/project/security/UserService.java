@@ -1,4 +1,6 @@
-package edu.jhu.project;
+package edu.jhu.project.security;
+
+import edu.jhu.project.models.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

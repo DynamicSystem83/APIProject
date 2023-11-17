@@ -1,4 +1,6 @@
-package edu.jhu.project;
+package edu.jhu.project.security;
+
+import edu.jhu.project.models.*;
 
 import java.util.ArrayList;
 import java.util.List;

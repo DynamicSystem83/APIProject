@@ -1,4 +1,4 @@
-package edu.jhu.project;
+package edu.jhu.project.security;
 
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;

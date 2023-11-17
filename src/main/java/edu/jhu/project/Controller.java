@@ -1,5 +1,7 @@
 package edu.jhu.project;
 
+import edu.jhu.project.models.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,6 +66,13 @@ public class Controller
 		movies.add("tt0086190");
 		movies.add("tt0087332");
 		movies.add("tt1160419");
+		movies.add("tt0119698");
+		movies.add("tt0093779");
+		movies.add("tt0094625");
+		movies.add("tt0117500");
+		movies.add("tt0120815");
+		movies.add("tt0095016");
+		movies.add("tt0099423");
 
 		List<BusinessDay> businessHours = new ArrayList();
 		businessHours.add(new BusinessDay(DayOfWeek.MONDAY, LocalTime.of(13, 0), LocalTime.of(23, 0)));
@@ -155,9 +164,9 @@ public class Controller
 	@GetMapping(value = "/movies/{movieId}")
     public ResponseEntity getSpecificMovie(@PathVariable String movieId)
     {
-		Movie m = getMovieFromId(movieId);
-		if (m != null)
+		if (movies.contains(movieId))
 		{
+			Movie m = getMovieFromId(movieId);
 			return ResponseEntity.ok(m);
 		}
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie not found");
@@ -213,7 +222,8 @@ public class Controller
 
 		List<Showing> showingsForTheater = findShowingsByTheaterId(theaterId);
 
-		for (Showing s : showingsForTheater){
+		for (Showing s : showingsForTheater)
+		{
 			s.addMetaData("Movie", getMovieFromId(s.getMovieId()));
 		}
 
@@ -262,6 +272,12 @@ public class Controller
 		// Create a predicate to filter based on request parameters
 		Predicate<Showing> filterPredicate = showing -> {
             LocalDate currentDate = LocalDate.now();
+
+            // Filter by movieId if provided
+            if (movieId != null && !showing.getMovieId().equals(movieId))
+			{
+                return false;
+            }
 
             // Filter by theaterId if provided
             if (theaterId != null && showing.getTheaterId() != theaterId.intValue())
