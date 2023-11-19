@@ -1,11 +1,19 @@
 package edu.jhu.project;
 
+import edu.jhu.project.models.*;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;  
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.lang.IllegalArgumentException;
 
 import org.springframework.http.ResponseEntity;
@@ -14,6 +22,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.boot.autoconfigure.cache.CacheProperties.Caffeine;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.client.RestTemplate;
 
@@ -21,6 +31,10 @@ import javax.validation.ConstraintViolationException;
 
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.Email;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.Pattern;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,6 +51,8 @@ public class Controller
 
 	private final AtomicInteger showingIdCounter = new AtomicInteger();
 	private List<Showing> showings = new ArrayList<Showing>();
+	
+	private final String stateRegEx = "^(AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|([M][EDAINSOT])|([N][EVHJMYCD])|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)$";
     
 	public Controller()
 	{
@@ -50,6 +66,13 @@ public class Controller
 		movies.add("tt0086190");
 		movies.add("tt0087332");
 		movies.add("tt1160419");
+		movies.add("tt0119698");
+		movies.add("tt0093779");
+		movies.add("tt0094625");
+		movies.add("tt0117500");
+		movies.add("tt0120815");
+		movies.add("tt0095016");
+		movies.add("tt0099423");
 
 		List<BusinessDay> businessHours = new ArrayList();
 		businessHours.add(new BusinessDay(DayOfWeek.MONDAY, LocalTime.of(13, 0), LocalTime.of(23, 0)));
@@ -60,11 +83,11 @@ public class Controller
 		businessHours.add(new BusinessDay(DayOfWeek.SATURDAY, LocalTime.of(10, 0), LocalTime.of(23, 59)));
 		businessHours.add(new BusinessDay(DayOfWeek.SUNDAY, LocalTime.of(10, 0), LocalTime.of(21, 0)));
 
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse Village", new Address("2700 W Anderson Ln.", "Austin", "Texas"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse South Lamar", new Address("1120 S Lamar Blvd.", "Austin", "Texas"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse LaCenterra", new Address("2707 Commercial Center Blvd.", "Houston", "Texas"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Marcus Point Cinema", new Address("7825 Big Sky Dr.", "Madison", "Wisconsin"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "AMC Fitchburg 18", new Address("6091 McKee Rd.", "Fitchburg", "Wisconsin"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse Village", new Address("2700 W Anderson Ln.", "Austin", "TX"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse South Lamar", new Address("1120 S Lamar Blvd.", "Austin", "TX"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse LaCenterra", new Address("2707 Commercial Center Blvd.", "Houston", "TX"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Marcus Point Cinema", new Address("7825 Big Sky Dr.", "Madison", "WI"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "AMC Fitchburg 18", new Address("6091 McKee Rd.", "Fitchburg", "WI"), businessHours));
 
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "Standard", LocalDate.of(2023, 10, 21), LocalTime.of(15, 15), 20, 7));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "IMAX", LocalDate.of(2023, 11, 21), LocalTime.of(15, 0), 15, 3));
@@ -97,113 +120,194 @@ public class Controller
 
 	@GetMapping(value = "/movies")
     public ResponseEntity getMovies(@RequestParam(value="genre", required=false) String genre,
-									@RequestParam(value="mpaRating", required=false) String mpaRating,
-									@RequestParam(value="customerRating", required=false) double customerRating,
+									@RequestParam(value="mpaRating", required=false) @Pattern(regexp="^(G|PG|PG-13|R|NC-17)$", message="Invalid MPA rating") String mpaRating,
+									@RequestParam(value="customerRating", required=false) @DecimalMin(value = "0.0", inclusive = true) @DecimalMax(value = "10.0", inclusive = true) Double customerRating,
 									@RequestParam(value="title", required=false) String title)
     {
-		// TODO: Add filtering
-		// TODO: Add caching
-		// TODO: Add errors
+
 		List<Movie> movieList = getMovieListFromIds(movies);
-		if (genre != null)
-		{
-			movieList = movieList.stream().filter(m -> m.getGenre().equals(genre)).collect(Collectors.toList());
-			/*for (Movie m : movieList)
+
+		// Create a predicate to filter based on request parameter
+		Predicate<Movie> filterMoviePredicate = movie -> {
+            // Filter by genre if provided
+            if (genre != null && !movie.getGenre().toLowerCase().contains(genre.toLowerCase()))
 			{
-				if (!m.getGenre().equals(genre))
-				{
-					movieList.remove(m);
-				}
-			}*/
-		}
-		if (mpaRating != null)
-		{
-			movieList = movieList.stream().filter(m -> m.getMpaRating().contains(mpaRating)).collect(Collectors.toList());
-			/*for (Movie m : movieList)
+                return false;
+            }
+
+            // Filter by mpaRating if provided
+			if (mpaRating != null && !movie.getMpaRating().equals(mpaRating))
 			{
-				if (!m.getMpaRating().equals(mpaRating))
-				{
-					movieList.remove(m);
-				}
-			}*/
-		}
-		if (customerRating != null)
-		{
-			movieList = movieList.stream().filter(m -> m.getCustomerRating() >= customerRating).collect(Collectors.toList());
-			/*for (Movie m : movieList)
+                return false;
+            }
+			
+			// Filter by title if provided
+			if (title != null && !movie.getTitle().toLowerCase().contains(title.toLowerCase()))
 			{
-				if (m.getCustomerRating() < customerRating)
-				{
-					movieList.remove(m);
-				}
-			}*/
-		}
-        return ResponseEntity.ok(movieList);
+                return false;
+            }
+			// Filter by customerRating if provided
+			if (customerRating != null && movie.getCustomerRating() < customerRating)
+			{
+                return false;
+            }
+            return true;
+        };
+
+		List<Movie> filteredMovies = movieList.stream()
+                .filter(filterMoviePredicate)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredMovies);
     }
 
 	@GetMapping(value = "/movies/{movieId}")
     public ResponseEntity getSpecificMovie(@PathVariable String movieId)
     {
-		Movie m = getMovieFromId(movieId);
-		if (m != null)
+		if (movies.contains(movieId))
 		{
+			Movie m = getMovieFromId(movieId);
 			return ResponseEntity.ok(m);
 		}
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Showing not found");
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie not found");
 	}
 
 	@GetMapping(value = "/theaters")
     public ResponseEntity getTheaters(@RequestParam(value="city", required=false) String city,
-									@RequestParam(value="state", required=false) String state)
+									@RequestParam(value="state", required=false) @Pattern(regexp=stateRegEx, message="Invalid state abbreviation") String state)
     {
-        return ResponseEntity.ok(theaters);
+		// Create a predicate to filter based on request parameter
+		Predicate<Theater> filterTheaterPredicate = theater -> {
+            // Filter by state if provided
+            if (state != null && !theater.getAddr().getState().equals(state))
+			{
+                return false;
+            }
+
+			// Filter by city if provided
+			if (city != null && !theater.getAddr().getCity().toLowerCase().equals(city.toLowerCase()))
+			{
+                return false;
+            }
+
+            return true;
+        };
+
+		List<Theater> filteredTheaters = theaters.stream()
+                .filter(filterTheaterPredicate)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredTheaters);
 	}
 
 	@GetMapping(value = "/theaters/{theaterId}")
     public ResponseEntity getSpecificTheater(@PathVariable int theaterId)
     {
-		// TODO: only show future showings
-		// TODO: Add errors
-		// Should this be changed to also show theater details if a query parameter is set
-		List<String> movieIds = new ArrayList<String>();
-		for (Showing s : showings)
+		Theater currentTheater = findTheaterById(theaterId);
+		if (currentTheater == null)
 		{
-			if (s.getTheaterId() == theaterId)
-			{
-				if (s.getDate() > LocalDate.now())
-				{
-					if (!movieIds.contains(s.getMovieId()))
-					{
-						movieIds.add(s.getMovieId());
-					}
-				}
-			}
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
 		}
-		
-		return ResponseEntity.ok(getMovieListFromIds(movieIds));
+		return ResponseEntity.ok(currentTheater);
+	}
+
+	@GetMapping(value = "/theaters/{theaterId}/showings")
+	public ResponseEntity getSpecificTheaterShowings(@PathVariable int theaterId)
+	{
+		Theater currentTheater = findTheaterById(theaterId);
+		if (currentTheater == null)
+		{
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
+		}
+
+		List<Showing> showingsForTheater = findShowingsByTheaterId(theaterId);
+
+		for (Showing s : showingsForTheater)
+		{
+			s.addMetaData("Movie", getMovieFromId(s.getMovieId()));
+		}
+
+		// Create a Map to hold the results
+        Map<String, Object> result = new HashMap<>();
+		result.put("theater", currentTheater);
+        result.put("showings", showingsForTheater);
+
+		return ResponseEntity.ok(result);	
+	}
+
+	@GetMapping(value = "/theaters/{theaterId}/movies")
+	public ResponseEntity getSpecificTheaterAvailableMovies(@PathVariable int theaterId)
+	{
+		Theater currentTheater = findTheaterById(theaterId);
+		if (currentTheater == null)
+		{
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Theater not found");
+		}
+
+		List<Showing> showingsForTheater = findShowingsByTheaterId(theaterId);
+		List<String> movies = showingsForTheater.stream()
+            .map(Showing::getMovieId) // Extract movie IDs from showings
+            .distinct() 
+            .collect(Collectors.toList()); 
+
+		List<Movie> movieList = getMovieListFromIds(movies);
+
+		// Create a Map to hold the results
+        Map<String, Object> result = new HashMap<>();
+
+
+		result.put("theater", currentTheater);
+        result.put("movies", movieList);
+
+		return ResponseEntity.ok(result);	
 	}
 
 	@GetMapping(value = "/showings")
     public ResponseEntity getShowings(@RequestParam(value="movieId", required=false) String movieId,
-									@RequestParam(value="theaterId", required=false) int theaterId,
-									@RequestParam(value="date", required=false) String date)
+									@RequestParam(value="theaterId", required=false) Integer theaterId,
+									@RequestParam(value="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date)
     {
-		// TODO: Add filtering (including only show future showings)
-		// TODO: Add errors
 		List<Showing> showingList = new ArrayList<Showing>();
-		for (Showing s : showings)
-		{
-			if (s.getDate() > LocalDate.now())
+
+		// Create a predicate to filter based on request parameters
+		Predicate<Showing> filterPredicate = showing -> {
+            LocalDate currentDate = LocalDate.now();
+
+            // Filter by movieId if provided
+            if (movieId != null && !showing.getMovieId().equals(movieId))
 			{
-				showingList.add(s);
-			}
-		}
-        return ResponseEntity.ok(showingList);
+                return false;
+            }
+
+            // Filter by theaterId if provided
+            if (theaterId != null && showing.getTheaterId() != theaterId.intValue())
+			{
+                return false;
+            }
+
+            // Filter by date if provided
+            if (date != null)
+			{
+                if (!showing.getDate().isEqual(date))
+				{
+                    return false;
+                }
+            }
+
+            // Filter current and future showings
+            return showing.getDate().isAfter(currentDate) || showing.getDate().isEqual(currentDate);
+        };
+
+		List<Showing> filteredShowings = showings.stream()
+                .filter(filterPredicate)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredShowings);
 	}
 
 	@PutMapping(value = "/showings/{showingId}")
     public ResponseEntity purchaseTickets(@PathVariable int showingId,
-								  @RequestParam(value="numberTickets", required=true) int numberTickets)
+								  @RequestParam(value="numberTickets", required=true) @Min(value = 1, message = "Must purchase at least one ticket") int numberTickets)
     {
 		for (Showing s : showings)
 		{
@@ -221,9 +325,9 @@ public class Controller
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Showing not found");
     }
 	
+	@Cacheable("movies")
 	public Movie getMovieFromId(String movieId)
 	{
-		// TODO: Add caching
 		RestTemplate restTemplate = new RestTemplate();
 		ObjectMapper mapper = new ObjectMapper();
 		String prefixURL = "http://www.omdbapi.com/?i=";
@@ -245,7 +349,7 @@ public class Controller
 				respTitle = root.findValue("Title").textValue();
 				respGenre = root.findValue("Genre").textValue();
 				respMpaRating = root.findValue("Rated").textValue();
-				respCustomerRating = root.findValue("imdbRating").doubleValue();
+				respCustomerRating = Double.parseDouble(root.findValue("imdbRating").textValue());
 				return new Movie(movieId, respTitle, respGenre, respMpaRating, respCustomerRating);
 			}
 			catch (JsonProcessingException e)
@@ -272,4 +376,21 @@ public class Controller
 		}
         return movieList;
 	}
+
+	private Theater findTheaterById(int theaterId) {
+        // Logic to find and return the theater by ID
+        return theaters.stream()
+            .filter(theater -> theater.getTheaterId() == theaterId)
+            .findFirst()
+            .orElse(null); // Handle if theater is not found
+    }
+
+	private List<Showing> findShowingsByTheaterId(int theaterId) {
+        // Logic to find and return the theater by ID
+		LocalDate currentDate = LocalDate.now();
+        return showings.stream()
+            .filter(showing -> showing.getTheaterId() == theaterId 
+			&& (showing.getDate().isAfter(currentDate) || showing.getDate().isEqual(currentDate)))
+            .collect(Collectors.toList());
+    }
 }
