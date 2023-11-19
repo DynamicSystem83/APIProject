@@ -1,0 +1,403 @@
+---
+openapi: 3.0.0
+info:
+  title: Project
+  description: project yaml
+  version: 1.0.0
+servers:
+- url: https://development.JHUserver.edu
+  description: Development server
+- url: https://staging.JHUserver.edu
+  description: Staging server
+- url: https://api.JHUserver.edu
+  description: Production server
+paths:
+  /movies:
+    get:
+      description: Get list of filtered movies (no params will list all movies)
+      parameters:
+      - name: genre
+        in: query
+        description: Movie genre to search for
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: scifi
+      - name: mpaRating
+        in: query
+        description: Movie mpa rating to search for
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: PG-13
+      - name: customerRating
+        in: query
+        description: Movie customer rating to search for (0-10)
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 9
+      - name: title
+        in: query
+        description: Movie title to search for
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: Underworld
+      responses:
+        "200":
+          description: A list of filtered movies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+        "400":
+          description: Bad Request (invalid query params)
+  /movies/{movieId}:
+    get:
+      description: Get information for a specific movie
+      parameters:
+      - name: movieId
+        in: path
+        description: Id of movie
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          example: tt1285016
+      responses:
+        "200":
+          description: Details of a movie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        "404":
+          description: Movie not found
+  /theaters:
+    get:
+      description: Get list filtered of theaters (no params will list all)
+      parameters:
+      - name: city
+        in: query
+        description: Theater city to search for
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: Austin
+      - name: state
+        in: query
+        description: Theater state to search for (abbreviated state)
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: TX
+      responses:
+        "200":
+          description: A list of filtered theaters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Theater'
+        "400":
+          description: Bad Request (invalid query params)
+  /theaters/{theaterId}:
+    get:
+      description: Get information for a specific theater
+      parameters:
+      - name: theaterId
+        in: path
+        description: Id of theater
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          example: 11
+      responses:
+        "200":
+          description: Details for a specific theater
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Theater'
+        "404":
+          description: Theater not found
+  /theaters/{theaterId}/movies:
+    get:
+      description: Get information for all movies at a specific theater
+      parameters:
+      - name: theaterId
+        in: path
+        description: Id of theater to get movies for
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          example: 11
+      responses:
+        "200":
+          description: A list of all movies at the theater
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+        "404":
+          description: Theater not found
+  /theaters/{theaterId}/showings:
+    get:
+      description: Get information for all future showings at a specific theater
+      parameters:
+      - name: theaterId
+        in: path
+        description: Id of theater to get movies for
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          example: 11
+      responses:
+        "200":
+          description: A list of all future showings at a specific theater
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Showing'
+        "404":
+          description: Theater not found
+  /showings:
+    get:
+      description: Get a list of showings matching given criteria
+      parameters:
+      - name: movieId
+        in: query
+        description: Movie id of the movie to watch
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: tt1285016
+      - name: theaterId
+        in: query
+        description: Theater id where showing is
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 11
+      - name: date
+        in: query
+        description: Date of showing
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: 2023-31-12
+      responses:
+        "200":
+          description: List of showings that match the criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Showing'
+        "400":
+          description: Bad Request (invalid query params)
+  /showings/{showingId}:
+    put:
+      description: Purchase tickets for showing
+      parameters:
+      - name: showingId
+        in: path
+        description: Showing to purchase tickets for
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          example: 11
+      - name: numberTickets
+        in: query
+        description: Number of tickets to purchase (min amount = 1)
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 4
+      responses:
+        "200":
+          description: Total Price
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "404":
+          description: Showing not found
+        "304":
+          description: Not modified because not enough available tickets
+  /login:
+    post:
+      description: Generate a token used to authenticate a user to allow them to purchase tickets
+      parameters:
+      - name: email
+        in: query
+        description: Email of the user logging in
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: email@gmail.com
+      - name: password
+        in: query
+        description: Password for the user logging in
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: password
+      responses:
+        "200":
+          description: Token used for authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+components:
+  schemas:
+    Movie:
+      type: object
+      properties:
+        movieId:
+          type: string
+          example: tt1285016
+        title:
+          type: string
+          example: tt1285016
+        genre:
+          type: string
+          example: tt1285016
+        mpaRating:
+          type: string
+          example: tt1285016
+        customerRating:
+          type: number
+          example: 7.8
+      description: Model containing movie information
+    Theater:
+      type: object
+      properties:
+        theaterId:
+          type: integer
+          example: 11
+        name:
+          type: string
+          example: AMC South
+        address:
+          $ref: '#/components/schemas/Theater_address'
+        businessHours:
+          type: array
+          items:
+            $ref: '#/components/schemas/Theater_businessHours'
+      description: Model containing theater information
+    Showing:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 11
+        movieId:
+          type: string
+          example: tt1285016
+        theaterId:
+          type: integer
+          example: 11
+        date:
+          type: string
+          format: date
+          example: 2023-12-31
+        time:
+          type: string
+          format: time
+          example: 22:15
+        price:
+          type: number
+          description: Price of one ticket
+          example: 12.00
+        format:
+          type: string
+          example: IMAX
+        totalTickets:
+          type: integer
+          example: 11
+        remainingTickets:
+          type: integer
+          example: 4
+        additionalMetaData:
+            type: object
+            additionalProperties: true
+      description: Model containing showing information
+    inline_response_200:
+      type: object
+      properties:
+        price:
+          type: integer
+          description: total price in units of cents
+          example: 2400
+    Theater_address:
+      type: object
+      properties:
+        street:
+          type: string
+          example: 123 Main St
+        city:
+          type: string
+          example: Austin
+        state:
+          type: string
+          example: TX
+    Theater_businessHours:
+      type: object
+      properties:
+        dayOfWeek:
+          type: string
+          example: monday
+        open:
+          type: string
+          format: time
+          example: 6:30
+        close:
+          type: string
+          format: time
+          example: 13:45
