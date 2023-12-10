@@ -267,12 +267,10 @@ public class Controller
 									@RequestParam(value="theaterId", required=false) Integer theaterId,
 									@RequestParam(value="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date)
     {
-		List<Showing> showingList = new ArrayList<Showing>();
-
 		// Create a predicate to filter based on request parameters
 		Predicate<Showing> filterPredicate = showing -> {
             LocalDate currentDate = LocalDate.now();
-/*
+
             // Filter by movieId if provided
             if (movieId != null && !showing.getMovieId().equals(movieId))
 			{
@@ -293,9 +291,9 @@ public class Controller
                     return false;
                 }
             }
-*/
+
             // Filter current and future showings
-            return true;//showing.getDate().isAfter(currentDate) || showing.getDate().isEqual(currentDate);
+            return showing.getDate().isAfter(currentDate) || showing.getDate().isEqual(currentDate);
         };
 
 		List<Showing> filteredShowings = showings.stream()
