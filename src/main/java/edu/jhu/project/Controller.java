@@ -90,7 +90,7 @@ public class Controller
 		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "AMC Fitchburg 18", new Address("6091 McKee Rd.", "Fitchburg", "WI"), businessHours));
 
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "Standard", LocalDate.of(2023, 10, 21), LocalTime.of(15, 15), 20, 7));
-		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "IMAX", LocalDate.of(2024, 1, 21), LocalTime.of(15, 0), 15, 3));
+		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "IMAX", LocalDate.of(2023, 12, 21), LocalTime.of(15, 0), 15, 3));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0401855", 1, 12.00, "Standard", LocalDate.of(2024, 1, 25), LocalTime.of(14, 0), 15, 3));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0884328", 2, 15.00, "IMAX", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0100157", 3, 15.00, "3D", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
