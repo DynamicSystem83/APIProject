@@ -272,7 +272,7 @@ public class Controller
 		// Create a predicate to filter based on request parameters
 		Predicate<Showing> filterPredicate = showing -> {
             LocalDate currentDate = LocalDate.now();
-
+/*
             // Filter by movieId if provided
             if (movieId != null && !showing.getMovieId().equals(movieId))
 			{
@@ -293,7 +293,7 @@ public class Controller
                     return false;
                 }
             }
-
+*/
             // Filter current and future showings
             return true;//showing.getDate().isAfter(currentDate) || showing.getDate().isEqual(currentDate);
         };
