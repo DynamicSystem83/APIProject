@@ -1,6 +1,12 @@
 from locust import HttpUser, task, between
 
+
+
 class MyUser(HttpUser):
+    """Utilizes locust for load testing 
+    
+    To use run `locust -f .\load_testing.py
+    """
     wait_time = between(1, 5)  # Wait time between consecutive tasks
 
     @task
