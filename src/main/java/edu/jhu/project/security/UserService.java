@@ -53,6 +53,19 @@ public class UserService
         return user.orElse(null);
     }
 
+    public Optional<User> findByEmail(String email)
+	{
+        Optional<SiteUser> siteUser = userRepository.findByEmail(email);
+        if (siteUser.isPresent())
+		{
+            SiteUser tempUser = siteUser.get();
+            User user = new User(tempUser.getEmail(), tempUser.getPassword(), true, true, true, true,
+                    AuthorityUtils.createAuthorityList("USER"));
+            return Optional.of(user);
+        }
+        return  Optional.empty();
+    }
+
     public void save(SiteUser user)
 	{
         userRepository.save(user);

@@ -331,7 +331,7 @@ public class Controller
 		RestTemplate restTemplate = new RestTemplate();
 		ObjectMapper mapper = new ObjectMapper();
 		String prefixURL = "http://www.omdbapi.com/?i=";
-		String postfixURL = "&apikey=9f6c7222";
+		String postfixURL = "&apikey=a2c261f1";
 		
 		ResponseEntity<String> response;
 		String respTitle = "";

@@ -58,6 +58,18 @@ public class UserRepository
 		return Optional.empty();
 	}
 
+	public Optional<SiteUser> findByEmail(String email)
+	{
+		for (SiteUser u : users)
+		{
+			if ( u.getEmail().equals(email))
+			{
+				return Optional.of(u);
+			}
+		}
+		return Optional.empty();
+	}
+
     public List<SiteUser> getAll()
 	{
 		return users;
