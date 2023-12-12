@@ -177,13 +177,13 @@ public class Controller
 									@RequestParam(value="state", required=false) @Pattern(regexp=stateRegEx, message="Invalid state abbreviation") String state)
     {
 		
-		System.err.println("Movies: " + movies.size());
-		System.err.println("theaters: " + theaters.size());
-		System.err.println("Showings: " + showings.size());
+		console.log("Movies: " + movies.size());
+		console.log("theaters: " + theaters.size());
+		console.log("Showings: " + showings.size());
 		
 		for (Showing s : showings)
 		{
-			System.err.println(s);
+			console.log(s);
 		}
 		// Create a predicate to filter based on request parameter
 		Predicate<Theater> filterTheaterPredicate = theater -> {
@@ -277,13 +277,13 @@ public class Controller
 									@RequestParam(value="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date)
     {
 		
-		System.err.println("Movies: " + movies.size());
-		System.err.println("theaters: " + theaters.size());
-		System.err.println("Showings: " + showings.size());
+		console.log("Movies: " + movies.size());
+		console.log("theaters: " + theaters.size());
+		console.log("Showings: " + showings.size());
 		
 		for (Showing s : showings)
 		{
-			System.err.println(s);
+			console.log(s);
 		}
 		// Create a predicate to filter based on request parameters
 		Predicate<Showing> filterPredicate = showing -> {
