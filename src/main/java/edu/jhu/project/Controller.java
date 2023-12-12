@@ -94,6 +94,11 @@ public class Controller
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0401855", 1, 12.00, "Standard", LocalDate.of(2024, 1, 25), LocalTime.of(14, 0), 15, 3));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0884328", 2, 15.00, "IMAX", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0100157", 3, 15.00, "3D", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
+		
+		for (Showing s : showings)
+		{
+			System.out.println(s);
+		}
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
