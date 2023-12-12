@@ -300,7 +300,8 @@ public class Controller
                 .filter(filterPredicate)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(filteredShowings);
+        //return ResponseEntity.ok(filteredShowings);
+        return ResponseEntity.ok(showings);
 	}
 
 	@PutMapping(value = "/showings/{showingId}")
