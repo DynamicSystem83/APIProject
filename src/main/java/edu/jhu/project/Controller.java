@@ -176,15 +176,6 @@ public class Controller
     public ResponseEntity getTheaters(@RequestParam(value="city", required=false) String city,
 									@RequestParam(value="state", required=false) @Pattern(regexp=stateRegEx, message="Invalid state abbreviation") String state)
     {
-		
-		console.log("Movies: " + movies.size());
-		console.log("theaters: " + theaters.size());
-		console.log("Showings: " + showings.size());
-		
-		for (Showing s : showings)
-		{
-			console.log(s);
-		}
 		// Create a predicate to filter based on request parameter
 		Predicate<Theater> filterTheaterPredicate = theater -> {
             // Filter by state if provided
@@ -276,15 +267,6 @@ public class Controller
 									@RequestParam(value="theaterId", required=false) Integer theaterId,
 									@RequestParam(value="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date)
     {
-		
-		console.log("Movies: " + movies.size());
-		console.log("theaters: " + theaters.size());
-		console.log("Showings: " + showings.size());
-		
-		for (Showing s : showings)
-		{
-			console.log(s);
-		}
 		// Create a predicate to filter based on request parameters
 		Predicate<Showing> filterPredicate = showing -> {
             LocalDate currentDate = LocalDate.now();
