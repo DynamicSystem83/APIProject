@@ -95,6 +95,10 @@ public class Controller
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0884328", 2, 15.00, "IMAX", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0100157", 3, 15.00, "3D", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
 		
+		System.out.println("Movies: " + movies.size());
+		System.out.println("theaters: " + theaters.size());
+		System.out.println("Showings: " + showings.size());
+		
 		for (Showing s : showings)
 		{
 			System.out.println(s);
