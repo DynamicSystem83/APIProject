@@ -8,7 +8,7 @@ RUN mvn -f /home/app/pom.xml clean package
 
 # Create a new image with just the JRE and the JAR file
 FROM openjdk:11-jre-slim
-COPY --from=build /home/app/target/Project-0.0.1-SNAPSHOT.jar /usr/local/lib/Project-0.0.1-SNAPSHOT.jar
-EXPOSE 8080
-ENTRYPOINT ["java","-jar","/usr/local/lib/Project-0.0.1-SNAPSHOT.jar"]
+COPY --from=build /home/app/target/Project-1.0.0-SNAPSHOT.jar /usr/local/lib/Project-1.0.0-SNAPSHOT.jar
+EXPOSE 8090
+ENTRYPOINT ["java","-jar","/usr/local/lib/Project-1.0.0-SNAPSHOT.jar"]
 
