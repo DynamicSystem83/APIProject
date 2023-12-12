@@ -94,15 +94,6 @@ public class Controller
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0401855", 1, 12.00, "Standard", LocalDate.of(2024, 1, 25), LocalTime.of(14, 0), 15, 3));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0884328", 2, 15.00, "IMAX", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
 		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0100157", 3, 15.00, "3D", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
-		
-		System.out.println("Movies: " + movies.size());
-		System.out.println("theaters: " + theaters.size());
-		System.out.println("Showings: " + showings.size());
-		
-		for (Showing s : showings)
-		{
-			System.out.println(s);
-		}
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
@@ -185,6 +176,15 @@ public class Controller
     public ResponseEntity getTheaters(@RequestParam(value="city", required=false) String city,
 									@RequestParam(value="state", required=false) @Pattern(regexp=stateRegEx, message="Invalid state abbreviation") String state)
     {
+		
+		System.out.println("Movies: " + movies.size());
+		System.out.println("theaters: " + theaters.size());
+		System.out.println("Showings: " + showings.size());
+		
+		for (Showing s : showings)
+		{
+			System.out.println(s);
+		}
 		// Create a predicate to filter based on request parameter
 		Predicate<Theater> filterTheaterPredicate = theater -> {
             // Filter by state if provided
@@ -276,6 +276,15 @@ public class Controller
 									@RequestParam(value="theaterId", required=false) Integer theaterId,
 									@RequestParam(value="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date)
     {
+		
+		System.out.println("Movies: " + movies.size());
+		System.out.println("theaters: " + theaters.size());
+		System.out.println("Showings: " + showings.size());
+		
+		for (Showing s : showings)
+		{
+			System.out.println(s);
+		}
 		// Create a predicate to filter based on request parameters
 		Predicate<Showing> filterPredicate = showing -> {
             LocalDate currentDate = LocalDate.now();
