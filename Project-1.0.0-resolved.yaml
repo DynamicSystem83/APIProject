@@ -1,20 +1,18 @@
 ---
 openapi: 3.0.0
 info:
-  title: Project
-  description: project yaml
+  title: Central Services 
+  description: Movie RESTful  Web Service API yaml
   version: 1.0.0
 servers:
-- url: https://development.JHUserver.edu
-  description: Development server
-- url: https://staging.JHUserver.edu
-  description: Staging server
-- url: https://api.JHUserver.edu
+- url: https://apiproject-production-1c5d.up.railway.app
   description: Production server
 paths:
   /movies:
     get:
       description: Get list of filtered movies (no params will list all movies)
+      tags:
+      - Movies
       parameters:
       - name: genre
         in: query
@@ -66,6 +64,8 @@ paths:
   /movies/{movieId}:
     get:
       description: Get information for a specific movie
+      tags:
+      - Movies
       parameters:
       - name: movieId
         in: path
@@ -88,6 +88,8 @@ paths:
   /theaters:
     get:
       description: Get list filtered of theaters (no params will list all)
+      tags:
+      - Theaters
       parameters:
       - name: city
         in: query
@@ -121,6 +123,8 @@ paths:
   /theaters/{theaterId}:
     get:
       description: Get information for a specific theater
+      tags:
+      - Theaters
       parameters:
       - name: theaterId
         in: path
@@ -145,6 +149,8 @@ paths:
   /theaters/{theaterId}/movies:
     get:
       description: Get information for all movies at a specific theater
+      tags:
+      - Theaters
       parameters:
       - name: theaterId
         in: path
@@ -169,6 +175,8 @@ paths:
   /theaters/{theaterId}/showings:
     get:
       description: Get information for all future showings at a specific theater
+      tags:
+      - Theaters
       parameters:
       - name: theaterId
         in: path
@@ -193,6 +201,8 @@ paths:
   /showings:
     get:
       description: Get a list of showings matching given criteria
+      tags:
+      - Showings
       parameters:
       - name: movieId
         in: query
@@ -235,6 +245,8 @@ paths:
   /showings/{showingId}:
     put:
       description: Purchase tickets for showing
+      tags:
+      - Showings
       parameters:
       - name: showingId
         in: path
@@ -268,6 +280,8 @@ paths:
   /login:
     post:
       description: Generate a token used to authenticate a user to allow them to purchase tickets
+      tags:
+      - Login
       parameters:
       - name: email
         in: query
