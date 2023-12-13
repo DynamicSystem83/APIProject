@@ -10,8 +10,10 @@ public class Movie
 	private String genre;
 	private String mpaRating;
 	private double customerRating;
+	private String selfRef;
+	private String imdbRef;
 
-    public Movie(String movieId, String title, String genre, String mpaRating, double customerRating)
+    public Movie(String movieId, String title, String genre, String mpaRating, double customerRating, String selfRef, String imdbRef)
     {
         super();
         this.movieId = movieId;
@@ -19,6 +21,8 @@ public class Movie
         this.genre = genre;
         this.mpaRating = mpaRating;
         this.customerRating = customerRating;
+		this.selfRef = selfRef;
+		this.imdbRef = imdbRef;
     }
 
     public String getMovieId()
@@ -69,5 +73,25 @@ public class Movie
     public void setCustomerRating(double customerRating)
     {
         this.customerRating = customerRating;
+    }
+
+    public String getSelfRef()
+    {
+        return selfRef;
+    }
+
+    public void setSelfRef(String selfRef)
+    {
+        this.selfRef = selfRef;
+    }
+
+    public String getImdbRef()
+    {
+        return imdbRef;
+    }
+
+    public void setImdbRef(String imdbRef)
+    {
+        this.imdbRef = imdbRef;
     }
 }
