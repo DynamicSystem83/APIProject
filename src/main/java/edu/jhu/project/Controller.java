@@ -48,6 +48,8 @@ public class Controller
 	private List<Showing> showings = new ArrayList<Showing>();
 	
 	private final String stateRegEx = "^(AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|([M][EDAINSOT])|([N][EVHJMYCD])|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)$";
+	
+	private final String baseURL = "http://127.0.0.1:8080";
     
 	public Controller()
 	{
@@ -78,17 +80,17 @@ public class Controller
 		businessHours.add(new BusinessDay(DayOfWeek.SATURDAY, LocalTime.of(10, 0), LocalTime.of(23, 59)));
 		businessHours.add(new BusinessDay(DayOfWeek.SUNDAY, LocalTime.of(10, 0), LocalTime.of(21, 0)));
 
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse Village", new Address("2700 W Anderson Ln.", "Austin", "TX"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse South Lamar", new Address("1120 S Lamar Blvd.", "Austin", "TX"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse LaCenterra", new Address("2707 Commercial Center Blvd.", "Houston", "TX"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Marcus Point Cinema", new Address("7825 Big Sky Dr.", "Madison", "WI"), businessHours));
-		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "AMC Fitchburg 18", new Address("6091 McKee Rd.", "Fitchburg", "WI"), businessHours));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse Village", new Address("2700 W Anderson Ln.", "Austin", "TX"), businessHours, baseURL));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse South Lamar", new Address("1120 S Lamar Blvd.", "Austin", "TX"), businessHours, baseURL));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Alamo Drafthouse LaCenterra", new Address("2707 Commercial Center Blvd.", "Houston", "TX"), businessHours, baseURL));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "Marcus Point Cinema", new Address("7825 Big Sky Dr.", "Madison", "WI"), businessHours, baseURL));
+		theaters.add(new Theater(theaterIdCounter.incrementAndGet(), "AMC Fitchburg 18", new Address("6091 McKee Rd.", "Fitchburg", "WI"), businessHours, baseURL));
 
-		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "Standard", LocalDate.of(2023, 10, 21), LocalTime.of(15, 15), 20, 7));
-		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "IMAX", LocalDate.of(2023, 12, 13), LocalTime.of(15, 0), 15, 3));
-		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0401855", 1, 12.00, "Standard", LocalDate.of(2024, 1, 25), LocalTime.of(14, 0), 15, 3));
-		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0884328", 2, 15.00, "IMAX", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
-		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0100157", 3, 15.00, "3D", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3));
+		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "Standard", LocalDate.of(2023, 10, 21), LocalTime.of(15, 15), 20, 7, baseURL));
+		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0320691", 1, 12.00, "IMAX", LocalDate.of(2023, 12, 13), LocalTime.of(15, 0), 15, 3, baseURL));
+		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0401855", 1, 12.00, "Standard", LocalDate.of(2024, 1, 25), LocalTime.of(14, 0), 15, 3, baseURL));
+		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0884328", 2, 15.00, "IMAX", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3, baseURL));
+		showings.add(new Showing(showingIdCounter.incrementAndGet(), "tt0100157", 3, 15.00, "3D", LocalDate.of(2024, 2, 5), LocalTime.of(14, 0), 15, 3, baseURL));
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
@@ -343,7 +345,7 @@ public class Controller
 				respGenre = root.findValue("Genre").textValue();
 				respMpaRating = root.findValue("Rated").textValue();
 				respCustomerRating = Double.parseDouble(root.findValue("imdbRating").textValue());
-				return new Movie(movieId, respTitle, respGenre, respMpaRating, respCustomerRating);
+				return new Movie(movieId, respTitle, respGenre, respMpaRating, respCustomerRating, baseURL + "/movies/" + movieId, "https://www.imdb.com/title/" + movieId);
 			}
 			catch (JsonProcessingException e)
 			{
