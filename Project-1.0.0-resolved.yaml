@@ -314,6 +314,14 @@ components:
         customerRating:
           type: number
           example: 7.8
+        selfRef:
+          description: link to itself
+          type: string
+          example: /movies/{movieId}
+        imdbRef:
+          description: link to imdb page
+          type: string
+          example: https://www.imdb.com/title/{movieId}
       description: Model containing movie information
     Theater:
       type: object
@@ -330,6 +338,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Theater_businessHours'
+        selfRef:
+          description: link to itself
+          type: string
+          example: /theaters/{theaterId}
+        moviesRef:
+          description: link to available movies at the theater
+          type: string
+          example: /theaters/{theaterId}/movies
+        showingsRef:
+          description: link to available showings at the theater
+          type: string
+          example: /theaters/{theaterId}/showings
       description: Model containing theater information
     Showing:
       type: object
@@ -367,6 +387,18 @@ components:
         additionalMetaData:
             type: object
             additionalProperties: true
+        movieRef:
+          description: link to the movie
+          type: string
+          example: /movies/{movieId}
+        theaterRef:
+          description: link to the theater
+          type: string
+          example: /theaters/{theaterId}
+        purchaseTicketRef:
+          description: link to the ticket purchasing
+          type: string
+          example: /showings/{id}
       description: Model containing showing information
     inline_response_200:
       type: object
