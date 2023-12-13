@@ -22,8 +22,11 @@ public class Showing
 	private int totalTickets;
 	private int remainingTickets;
     private Map<String, Object> additionalMetaData;
+	private String movieRef;
+	private String theaterRef;
+	private String purchaseTicketRef;
 
-    public Showing(int id, String movieId, int theaterId, double price, String format, LocalDate date, LocalTime time, int totalTickets, int remainingTickets)
+    public Showing(int id, String movieId, int theaterId, double price, String format, LocalDate date, LocalTime time, int totalTickets, int remainingTickets, String baseURL)
     {
         super();
         this.id = id;
@@ -36,6 +39,9 @@ public class Showing
 		this.totalTickets = totalTickets;
 		this.remainingTickets = remainingTickets;
 		this.additionalMetaData = new HashMap<String, Object>();
+		this.movieRef = baseURL + "/movies/" + movieId;
+		this.theaterRef = baseURL + "/theaters/" + theaterId;
+		this.purchaseTicketRef = baseURL + "/showings/" + id;
     }
 
     public int getId()
@@ -128,15 +134,48 @@ public class Showing
         this.remainingTickets = remainingTickets;
     }
 
-    public void addMetaData(String key, Object value){
+    public void addMetaData(String key, Object value)
+	{
         additionalMetaData.put(key, value);
     }
 
-    public void removeMetaData(String key) {
+    public void removeMetaData(String key)
+	{
         additionalMetaData.remove(key);
     }
 
-    public Object getMetaData(String key) {
+    public Object getMetaData(String key)
+	{
         return additionalMetaData.get(key);
+    }
+
+    public String getMovieRef()
+    {
+        return movieRef;
+    }
+
+    public void setMovieRef(String movieRef)
+    {
+        this.movieRef = movieRef;
+    }
+
+    public String getTheaterRef()
+    {
+        return theaterRef;
+    }
+
+    public void setTheaterRef(String theaterRef)
+    {
+        this.theaterRef = theaterRef;
+    }
+
+    public String getPurchaseTicketRef()
+    {
+        return purchaseTicketRef;
+    }
+
+    public void setPurchaseTicketRef(String purchaseTicketRef)
+    {
+        this.purchaseTicketRef = purchaseTicketRef;
     }
 }
